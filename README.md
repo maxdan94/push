@@ -5,7 +5,8 @@ Push method for the computation of rooted page rank
 push.c is an implementation of the push method to approximate the rooted pagerank.  
 The algorithm is described page 6 here: https://papers-gamma.link/paper/174  
 Contrarily to the paper, we do not consider the lazy random walk, but plain random walk.  
-We approximately solve $pr(s)=\alpha s + T pr(s)$, where $T_ij=A_ij/dout_j$ is the transition matrix and vector s should be such that $s[u]=1$ if u is the root node and 0 otherwise.  
+We approximately solve $pr(s)=\alpha s + T pr(s)$, where $T_ij=A_ij/dout_j$ is the transition matrix and vector s should be such that $s[u]=1$ if u is the root node and 0 otherwise. 
+allpush.c runs the push method for each node in the graph. The overall running time is in $O(m+n/(\epsilon \alpha))$.  
 RootedPageRank.c is an implementation of the power iteration method.
 
 ## To compile:
