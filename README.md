@@ -33,7 +33,3 @@ RootedPageRank.c is an implementation of the power iteration method.
 - source: the id of the root node: the random walk restarts from that node with probability 0.15
 - will print only entries of the pagrank vector that are larger than eps
 - res.txt will contain an approximation of the pagerank (30 iterations using the power iteration method). "nodeID PageRankValue\n" on each line.
-
-to sort the output:
-- by node ID: sort -n -k1,1 res.txt >resSORTED.txt
-- by value: LC_NUMERIC=C sort -gr -k2,2 res.txt >resSORTED.txt
