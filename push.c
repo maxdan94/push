@@ -1,0 +1,249 @@
+/*
+Maximilien Danisch
+Novembre 2020
+http://bit.ly/danisch
+maximilien.danisch@gmail.com
+
+Info:
+Implementation of the push method to approximate the rooted pagerank.
+Algorithm described page 6 here: http://www.leonidzhukov.net/hse/2015/networks/papers/andersen06localgraph.pdf
+
+to compile:
+gcc push.c -o push -O9
+
+to execute:
+./push net.txt source eps pagerank.txt
+- net.txt should contain on each line twos unsigned separated by a space: "source target\n" that is the input directed graph.
+- find the rooted pagerank of node source
+- eps precision
+- res.txt will contain an approximation of the pagerank with a restart probability of 0.15. "nodeID PageRankValue\n" on each line (contains only nonzero values).
+
+to sort the output:
+- by node ID: sort -n -k1,1 resPUSH.txt >resPUSHsort.txt
+- by value: LC_NUMERIC=C sort -gr -k2,2 resPUSH.txt >resPUSHsort.txt
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <strings.h>
+#include <time.h>
+
+#define NLINKS 10000000 //maximum number of edges, will increase if needed
+#define ALPHA 0.15 //restart probability of pagerank
+
+typedef struct {
+	unsigned long s;
+	unsigned long t;
+} edge;
+
+//edge list structure:
+typedef struct {
+	unsigned long n;//number of nodes
+	unsigned long long e;//number of edges
+	edge *edges;//list of edges
+	unsigned long *d;//d[i]=out-degree of node i
+	unsigned long long *cd;//cumulative out-degree cd[0]=0 length=n+1
+	unsigned long *adj;//concatenated lists of out-neighbors of all nodes
+} adjlist;
+
+//compute the maximum of three unsigned long long
+unsigned long max3(unsigned long a,unsigned long b,unsigned long c){
+	a=(a>b) ? a : b;
+	return (a>c) ? a : c;
+}
+
+//reading the edgelist from file
+adjlist* readedgelist(char* input){
+	unsigned long long e1=NLINKS;
+	FILE *file=fopen(input,"r");
+
+	adjlist *g=malloc(sizeof(adjlist));
+	g->n=0;
+	g->e=0;
+	g->edges=malloc(e1*sizeof(edge));//allocate some RAM to store edges
+
+	while (fscanf(file,"%lu %lu", &(g->edges[g->e].s), &(g->edges[g->e].t))==2) {
+		g->n=max3(g->n,g->edges[g->e].s,g->edges[g->e].t);
+		if (++(g->e)==e1) {//increase allocated RAM if needed
+			e1+=NLINKS;
+			g->edges=realloc(g->edges,e1*sizeof(edge));
+		}
+	}
+	fclose(file);
+
+	g->n++;
+
+	g->edges=realloc(g->edges,g->e*sizeof(edge));
+
+	return g;
+}
+
+//building the adjacency matrix
+void mkadjlist(adjlist* g){
+	unsigned long i,s,t;
+	unsigned long long j;
+
+	g->d=calloc(g->n,sizeof(unsigned long));
+
+	for (j=0;j<g->e;j++) {
+		g->d[g->edges[j].s]++;
+	}
+
+	g->cd=malloc((g->n+1)*sizeof(unsigned long long));
+	g->cd[0]=0;
+	for (i=1;i<g->n+1;i++) {
+		g->cd[i]=g->cd[i-1]+g->d[i-1];
+		g->d[i-1]=0;
+	}
+
+	g->adj=malloc(g->e*sizeof(unsigned long));
+
+	for (j=0;j<g->e;j++) {
+		s=g->edges[j].s;
+		t=g->edges[j].t;
+		g->adj[ g->cd[s] + g->d[s]++ ]=t;
+	}
+
+	free(g->edges);
+}
+
+//freeing memory
+void free_adjlist(adjlist *g){
+	free(g->d);
+	free(g->cd);
+	free(g->adj);
+	free(g);
+}
+
+typedef struct {
+	unsigned long nmax;//maximum number of element in set
+	unsigned long n;//number of elements in dict
+	unsigned long* list;//elements in set
+	double* val;//elements in set
+} Dict ;
+
+Dict* allocdict(unsigned long n){
+	Dict* dict=malloc(sizeof(Dict));
+	dict->nmax=n;
+	dict->n=0;
+	dict->list=malloc(n*sizeof(unsigned long));
+	dict->val=calloc(n,sizeof(double));
+	return dict;
+}
+
+void free_dict(Dict *dict){
+	free(dict->list);
+	free(dict->val);
+	free(dict);
+}
+
+
+Dict *push(adjlist* g, double alpha, unsigned long source, double eps){
+	Dict *r=allocdict(g->n),*p=allocdict(g->n);
+	unsigned long long i,it=0;
+	unsigned long u,v;
+	double val;
+
+	r->val[source]=1;
+	if (1.>eps*g->d[source]){
+		r->list[(r->n)++]=source;
+	}
+
+	while (r->n>0){
+		it++;
+		u=r->list[--(r->n)];
+		val=r->val[u];
+		r->val[u]=0;
+
+		if (p->val[u]==0){
+			p->list[(p->n)++]=u;
+		}
+		p->val[u]+=alpha*val;
+		for (i=g->cd[u];i<g->cd[u+1];i++){
+			v=g->adj[i];
+			if (r->val[v]<eps*g->d[v]){
+				r->val[v]+=(1-alpha)*val/g->d[u];
+				if (r->val[v]>eps*g->d[v]){
+					r->list[(r->n)++]=v;
+				}
+			}
+			else{
+				r->val[v]+=(1-alpha)*val/g->d[u];
+			}
+		}
+	}
+
+	free_dict(r);
+
+	printf("number of Push iterations: %llu\n",it);
+	return p;
+}
+
+
+void print_dict(FILE* file,Dict* dict){
+	unsigned long i,u;
+	double sum=0;
+	for (i=0;i<dict->n;i++){
+		u=dict->list[i];
+		sum+=dict->val[u];
+		fprintf(file,"%lu %le\n",u,dict->val[u]);
+	}
+	printf("Number of non-zero values: %lu\n",dict->n);
+	printf("Sum of values: %le\n",sum);
+}
+
+int main(int argc,char** argv){
+	unsigned long source;
+	double eps;
+	adjlist* g;
+	Dict* p;
+	FILE* file;
+
+	time_t t0,t1,t2;
+
+	t1=time(NULL);
+	t0=t1;
+
+	printf("Reading edgelist from file %s\n",argv[1]);
+
+	g=readedgelist(argv[1]);
+
+	printf("Number of nodes = %lu\n",g->n);
+	printf("Number of edges = %llu\n",g->e);
+
+	mkadjlist(g);
+
+
+	source=atoi(argv[2]);
+	printf("source node = %lu\n",source);
+
+	eps=atof(argv[3]);
+	printf("epsilon = %le\n",eps);
+
+	t2=time(NULL);
+	printf("- Time = %ldh%ldm%lds\n",(t2-t1)/3600,((t2-t1)%3600)/60,((t2-t1)%60));
+	t1=t2;
+
+	printf("Computing approximation of pagerank\n");
+
+	p=push(g,ALPHA,source,eps);
+
+	t2=time(NULL);
+	printf("- Time = %ldh%ldm%lds\n",(t2-t1)/3600,((t2-t1)%3600)/60,((t2-t1)%60));
+	t1=t2;
+
+	printf("Printing results to file %s\n",argv[4]);
+	file=fopen(argv[4],"w");
+	print_dict(file,p);
+	fclose(file);
+
+	free_adjlist(g);
+	free_dict(p);
+
+	t2=time(NULL);
+	printf("- Overall time = %ldh%ldm%lds\n",(t2-t0)/3600,((t2-t0)%3600)/60,((t2-t0)%60));
+
+	return 0;
+}
+
