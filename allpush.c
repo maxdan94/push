@@ -13,10 +13,9 @@ gcc allpush.c -o allpush -O9
 
 to execute:
 ./allpush net.txt eps pagerank.txt
-- net.txt should contain on each line twos unsigned separated by a space: "source target\n" that is the input directed graph.
-- find an approximation of the rooted pagerank for each node
+- net.txt should contain on each line two unsigned separated by a space: "source target\n" that is the input directed graph.
 - eps precision
-- res.txt will contain an approximation of the pagerank with a restart probability of 0.15. each line coresponds to a node: "nodeID1 PageRankValue1 nodeID2 PageRankValue2 nodeID3 PageRankValue3..." (contains only nonzero values).
+- res.txt will contain an approximation of the pagerank with a restart probability of 0.15: each line coresponds to a node: "k nodeID1 PageRankValue1 nodeID2 PageRankValue2... nodeIDk PageRankValuek" (contains only nonzero values and k is the number of nonzero values).
 
 */
 
