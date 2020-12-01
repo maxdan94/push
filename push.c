@@ -37,7 +37,7 @@ typedef struct {
 	unsigned long t;
 } edge;
 
-//edge list structure:
+//directed graph datastructure:
 typedef struct {
 	unsigned long n;//number of nodes
 	unsigned long long e;//number of edges
@@ -116,11 +116,12 @@ void free_adjlist(adjlist *g){
 	free(g);
 }
 
+//dictionary-like datastruture
 typedef struct {
-	unsigned long nmax;//maximum number of element in set
+	unsigned long nmax;//maximum number of element in dict
 	unsigned long n;//number of elements in dict
-	unsigned long* list;//elements in set
-	double* val;//elements in set
+	unsigned long* list;//elements in dict
+	double* val;//elements in dict
 } Dict ;
 
 Dict* allocdict(unsigned long n){
@@ -138,7 +139,7 @@ void free_dict(Dict *dict){
 	free(dict);
 }
 
-
+//The heart of the code
 Dict *push(adjlist* g, double alpha, unsigned long source, double eps){
 	Dict *r=allocdict(g->n),*p=allocdict(g->n);
 	unsigned long long i,it=0;
@@ -176,7 +177,7 @@ Dict *push(adjlist* g, double alpha, unsigned long source, double eps){
 
 	free_dict(r);
 
-	printf("number of Push iterations: %llu\n",it);
+	printf("Number of Push iterations: %llu\n",it);
 	return p;
 }
 
