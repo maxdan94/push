@@ -10,7 +10,9 @@ RootedPageRank.c is an implementation of the power iteration method.
 
 ## To compile:
 - gcc push.c -o push -O9
+- gcc allpush.c -o allpush -O9
 - gcc RootedPageRank.c -o RootedPageRank -O9
+
 
 ## To execute:
 
@@ -19,6 +21,12 @@ RootedPageRank.c is an implementation of the power iteration method.
 - find the rooted pagerank of node source
 - eps precision
 - res.txt will contain an approximation of the pagerank with a restart probability of 0.15. "nodeID PageRankValue\n" on each line (contains only nonzero values).
+
+./allpush net.txt eps pagerank.txt
+- net.txt should contain on each line two unsigned separated by a space: "source target\n" that is the input directed graph.
+- eps precision
+- res.txt will contain an approximation of the pagerank with a restart probability of 0.15: each line coresponds to a node: "k nodeID1 PageRankValue1 nodeID2 PageRankValue2... nodeIDk PageRankValuek" (contains only nonzero values and k is the number of nonzero values).
+
 
 ./RootedPageRank net.txt source eps res.txt
 - net.txt should contain on each line two unsigned separated by a space: "source target\n" that is the input directed graph.
