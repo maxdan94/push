@@ -9,18 +9,15 @@ Implementation of the push method to approximate the rooted pagerank.
 Algorithm described page 6 here: http://www.leonidzhukov.net/hse/2015/networks/papers/andersen06localgraph.pdf
 
 to compile:
-gcc push.c -o push -O9
+gcc allpush.c -o allpush -O9
 
 to execute:
-./push net.txt source eps pagerank.txt
+./allpush net.txt eps pagerank.txt
 - net.txt should contain on each line twos unsigned separated by a space: "source target\n" that is the input directed graph.
-- find the rooted pagerank of node source
+- find an approximation of the rooted pagerank for each node
 - eps precision
-- res.txt will contain an approximation of the pagerank with a restart probability of 0.15. "nodeID PageRankValue\n" on each line (contains only nonzero values).
+- res.txt will contain an approximation of the pagerank with a restart probability of 0.15. each line coresponds to a node: "nodeID1 PageRankValue1 nodeID2 PageRankValue2 nodeID3 PageRankValue3..." (contains only nonzero values).
 
-to sort the output:
-- by node ID: sort -n -k1,1 resPUSH.txt >resPUSHsort.txt
-- by value: LC_NUMERIC=C sort -gr -k2,2 resPUSH.txt >resPUSHsort.txt
 */
 
 #include <stdlib.h>
@@ -133,6 +130,14 @@ Dict* allocdict(unsigned long n){
 	return dict;
 }
 
+void cleandict(Dict* dict){
+	unsigned long i;
+	for (i=0;i<dict->n;i++){
+		dict->val[dict->list[i]]=0;
+	}
+	dict->n=0;
+}
+
 void free_dict(Dict *dict){
 	free(dict->list);
 	free(dict->val);
@@ -142,7 +147,7 @@ void free_dict(Dict *dict){
 //The heart of the code
 void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, Dict* p){
 	unsigned long n=0;
-	unsigned long long i,it=0;
+	unsigned long long i;
 	unsigned long u,v;
 	double val;
 	static unsigned long *list=NULL;//stores the nodes with r->val[v]>eps*g->d[v]
@@ -157,7 +162,6 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 	}
 
 	while (n>0){
-		it++;
 		u=list[--n];
 		val=r->val[u];
 		r->val[u]=0;
@@ -182,28 +186,26 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 			}
 		}
 	}
-	printf("Number of Push iterations: %llu\n",it);
+
 }
 
 
 void print_dict(FILE* file,Dict* dict){
 	unsigned long i,u;
-	double sum=0;
+	fprintf(file,"%lu",dict->n);
 	for (i=0;i<dict->n;i++){
 		u=dict->list[i];
-		sum+=dict->val[u];
-		fprintf(file,"%lu %le\n",u,dict->val[u]);
+		fprintf(file," %lu %le",u,dict->val[u]);
 	}
-	printf("Number of non-zero values: %lu\n",dict->n);
-	printf("Sum of values: %le\n",sum);
+	fprintf(file,"\n");
 }
 
 int main(int argc,char** argv){
-	unsigned long source;
+	unsigned long i;
 	double eps;
-	adjlist* g;
+	adjlist *g;
 	Dict *r, *p;
-	FILE* file;
+	FILE *file;
 
 	time_t t0,t1,t2;
 
@@ -219,11 +221,7 @@ int main(int argc,char** argv){
 
 	mkadjlist(g);
 
-
-	source=atoi(argv[2]);
-	printf("source node = %lu\n",source);
-
-	eps=atof(argv[3]);
+	eps=atof(argv[2]);
 	printf("epsilon = %le\n",eps);
 
 	t2=time(NULL);
@@ -231,22 +229,28 @@ int main(int argc,char** argv){
 	t1=t2;
 
 	printf("Computing approximation of pagerank\n");
+	printf("Printing results to file %s\n",argv[3]);
+
 	r=allocdict(g->n);
 	p=allocdict(g->n);
-	push(g,ALPHA,source,eps,r,p);
+
+	file=fopen(argv[3],"w");
+	for (i=0;i<g->n;i++){
+		cleandict(r);
+		cleandict(p);
+		push(g,ALPHA,i,eps,r,p);
+		print_dict(file,p);
+	}
+	fclose(file);
+	free_dict(r);
+	free_dict(p);
 
 	t2=time(NULL);
 	printf("- Time = %ldh%ldm%lds\n",(t2-t1)/3600,((t2-t1)%3600)/60,((t2-t1)%60));
 	t1=t2;
 
-	printf("Printing results to file %s\n",argv[4]);
-	file=fopen(argv[4],"w");
-	print_dict(file,p);
-	fclose(file);
-
 	free_adjlist(g);
-	free_dict(r);
-	free_dict(p);
+
 
 	t2=time(NULL);
 	printf("- Overall time = %ldh%ldm%lds\n",(t2-t0)/3600,((t2-t0)%3600)/60,((t2-t0)%60));
