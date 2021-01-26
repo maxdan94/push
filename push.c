@@ -152,7 +152,7 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 
 	r->val[source]=1;
 	r->list[(r->n)++]=source;
-	if (1.>eps*g->d[source]){
+	if (1.>eps){//*g->d[source]){
 		list[n++]=source;
 	}
 
@@ -171,9 +171,9 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 			if (r->val[v]==0){//add v to set
 				r->list[(r->n)++]=v;
 			}
-			if (r->val[v]<eps*g->d[v]){
+			if (r->val[v]<eps){//*g->d[v]){
 				r->val[v]+=(1-alpha)*val/g->d[u];
-				if (r->val[v]>eps*g->d[v]){//add v to list of nodes to consider for push
+				if (r->val[v]>eps){//*g->d[v]){//add v to list of nodes to consider for push
 					list[n++]=v;
 				}
 			}

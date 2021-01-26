@@ -146,7 +146,7 @@ void free_dict(Dict *dict){
 //The heart of the code
 void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, Dict* p){
 	unsigned long n=0;
-	unsigned long long i;
+	unsigned long long i,it=0;
 	unsigned long u,v;
 	double val;
 	static unsigned long *list=NULL;//stores the nodes with r->val[v]>eps*g->d[v]
@@ -156,11 +156,12 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 
 	r->val[source]=1;
 	r->list[(r->n)++]=source;
-	if (1.>eps*g->d[source]){
+	if (1.>eps){//*g->d[source]){
 		list[n++]=source;
 	}
 
 	while (n>0){
+		it++;
 		u=list[--n];
 		val=r->val[u];
 		r->val[u]=0;
@@ -174,9 +175,9 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 			if (r->val[v]==0){//add v to set
 				r->list[(r->n)++]=v;
 			}
-			if (r->val[v]<eps*g->d[v]){
+			if (r->val[v]<eps){//*g->d[v]){
 				r->val[v]+=(1-alpha)*val/g->d[u];
-				if (r->val[v]>eps*g->d[v]){//add v to list of nodes to consider for push
+				if (r->val[v]>eps){//*g->d[v]){//add v to list of nodes to consider for push
 					list[n++]=v;
 				}
 			}
@@ -185,7 +186,7 @@ void push(adjlist* g, double alpha, unsigned long source, double eps, Dict* r, D
 			}
 		}
 	}
-
+	//printf("Number of Push iterations: %llu\n",it);
 }
 
 

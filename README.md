@@ -11,7 +11,10 @@ RootedPageRank.c is an implementation of the power iteration method.
 ## To compile:
 - gcc push.c -o push -O9
 - gcc allpush.c -o allpush -O9
-- gcc RootedPageRank.c -o RootedPageRank -O9
+- gcc RootedPageRankIEPS.c -o RootedPageRankEPS -O9
+- gcc RootedPageRankITER.c -o RootedPageRankITER -O9
+
+
 
 
 ## To execute:
@@ -28,11 +31,15 @@ RootedPageRank.c is an implementation of the power iteration method.
 - res.txt will contain an approximation of the pagerank with a restart probability of 0.15: each line coresponds to a node: "k nodeID1 PageRankValue1 nodeID2 PageRankValue2... nodeIDk PageRankValuek" (contains only nonzero values and k is the number of nonzero values).
 
 
-./RootedPageRank net.txt source eps res.txt
+./RootedPageRankEPS net.txt source eps res.txt
 - net.txt should contain on each line two unsigned separated by a space: "source target\n" that is the input directed graph.
 - source: the id of the root node: the random walk restarts from that node with probability 0.15
 - will print only entries of the pagrank vector that are larger than eps
 - res.txt will contain an approximation of the pagerank (30 iterations using the power iteration method). "nodeID PageRankValue\n" on each line.
+
+./RootedPageRankITER net.txt source it res.txt
+
+- it is the number of power iterations to perform
 
 to sort the output:
 - by node ID: sort -n -k1,1 res.txt >resSORTED.txt
